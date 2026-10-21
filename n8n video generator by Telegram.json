@@ -1,0 +1,180 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "d4b70351-f84c-45e7-b19e-7705cd046c01",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        -16,
+        0
+      ],
+      "webhookId": "27b0c6bd-fbe7-4c95-9cbb-8d4255342394",
+      "credentials": {
+        "telegramApi": {
+          "id": "tO8dUELjnVgu0xPe",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}{{ $json.message.photo[3].file_id }}",
+        "options": {
+          "systemMessage": "You are an expert AI Video Prompt Engineer specializing in cinematic promotional videos.\n\nYour task is to transform promotional video ideas received from Telegram into professional, detailed, and optimized AI video generation prompts.\n\nFollow these rules:\n\n1. Understand the user's original idea, product, scene, and promotional objective.\n2. Enhance the prompt with professional cinematography, camera movements, lighting, visual composition, realistic textures, and cinematic effects.\n3. Create visually engaging, photorealistic, high-quality promotional videos.\n4. Preserve the user's original concept, product identity, and creative intentions.\n5. The video duration must be exactly 5 seconds.\n6. Optimize the scene, actions, and camera movements to fit naturally within 5 seconds.\n7. Focus on one impactful promotional scene. Avoid excessive transitions or complex storytelling.\n8. Write visual and technical instructions in English.\n9. All dialogue, voiceovers, narration, and on-screen text must be in Bahasa Indonesia.\n10. Keep spoken dialogue short enough to fit naturally within 5 seconds.\n11. Ensure natural Indonesian pronunciation and realistic lip synchronization when characters speak.\n12. Do not add unnecessary dialogue or unrelated elements.\n13. Ensure smooth motion, realistic physics, and consistent product appearance.\n14. Return only the final optimized video generation prompt without explanations or additional text.\n\nDefault settings:\n- Duration: Exactly 5 seconds\n- Style: Premium cinematic commercial\n- Visual quality: Photorealistic\n- Camera: Smooth cinematic movement\n- Spoken language: Bahasa Indonesia\n- On-screen text: Bahasa Indonesia\n\nIMPORTANT: The final prompt must be ready to send directly to an AI video generation model. All visual actions and dialogue must realistically fit within 5 seconds."
+        }
+      },
+      "id": "bd6eab59-a5b5-45bf-b412-e426c45cc976",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-5-nano",
+        "options": {}
+      },
+      "id": "df357766-baca-464e-be94-bf6f1ef6f1ff",
+      "name": "OpenRouter Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        224,
+        160
+      ],
+      "credentials": {
+        "openRouterApi": {
+          "id": "kFVvBFL0WDqbPFjv",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://fal.ai/models/blackforestlabs/flux-3-max/image-to-video",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prompt",
+              "value": "={{ $json.output }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "40d11377-edb9-4747-ac1f-fcc4ebb144cf",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        512,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Z9RBK8WoftwnrzYN",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendVideo",
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "binaryData": true,
+        "additionalFields": {}
+      },
+      "id": "f7e53b49-c867-4579-8dd5-338f692ecb0c",
+      "name": "Send a video",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        672,
+        0
+      ],
+      "webhookId": "ec5565e1-e933-442e-a141-d04e524badb0",
+      "credentials": {
+        "telegramApi": {
+          "id": "tO8dUELjnVgu0xPe",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Send a video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "d204563d-4387-4d3b-8bad-97e6cf5959b8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "464466d0263b06e082de93d53f30111461b0cc5ee5b25f1bc22051f5e8bbe954"
+  },
+  "nodeGroups": [],
+  "id": "H927vVxGNluWZL0F",
+  "tags": []
+}
